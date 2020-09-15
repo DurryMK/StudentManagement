@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>学生端|学生成绩管理</title>
+		<link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+		<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+		<script src="https://cdn.staticfile.org/popper.js/1.15.0/umd/popper.min.js"></script>
+		<script src="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+		<script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
+		<script src="https://cdn.staticfile.org/vue-resource/1.5.1/vue-resource.min.js"></script>
+		<link rel="stylesheet" href="css/admin.css">
+		<script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+		<script src="js/bootstrap-treeview.min.js"></script>
+	</head>
+	<body background="img/index4.jpg">
+		<div id="app" class="col-xl-10 offset-xl-1 rounded app row border">
+			<!-- 标题 -->
+			<div class="title rounded row border">
+				<div class="col-xl-5">
+					<h5>
+						<B><span style="color: white;">学生成绩管理系统|学生客户端</span></B>
+					</h5>
+				</div>
+				<div class="col-xl-3 offset-xl-4">
+					<span style="color: white;">欢迎您:【<span style="color: red">{{username}}</span>】&nbsp;&nbsp;&nbsp;
+					</span><a href="javascript:void" @click="exit"><span style="color: white;">安全退出</span></a>
+				</div>
+			</div>
+			<!-- 标题结束 -->
+			<!-- 左侧菜单 -->
+			<div class="col-xl-2 rounded menuView border rounded">
+				<div class="treetitle rounded border">
+					<h5>
+						<B><span style="color: white;">导航菜单</span></B>
+					</h5>
+				</div>
+				<!-- 左侧菜单主体 -->
+				<div id="tree" class="tree rounded"></div>
+			</div>
+			<!-- 左侧菜单结束 -->
+			<!-- 右侧内容-->
+			<div class="col-xl-10 rounded contentView border row">
+				<div class="col-xl-12">
+					<nav class="navbar navbar-light bg-light justify-content-between rounded">
+						<a class="navbar-brand"><B>{{title}}</B></a>
+						<!-- 个人信息工具栏 -->
+						<form class="form-inline" v-if="menu==0">
+							<input type="button" class="btn btn btn-outline-danger" @click="alterPersonalInfo" value="保存修改"> <input type="button"
+							 class="btn btn-link " data-toggle="tooltip" data-placement="right" title="点击列表，可修改以下信息:【电话号码(12位以内)/QQ号（18位以内）】"
+							 value="帮助">
+						</form>
+						<!-- 班级查询 -->
+						<form class="form-inline" v-if="menu==1">
+							<input id="key" class="form-control" type="search" placeholder="班级名" aria-label="Search"> <input class="btn btn-outline-success"
+							 type="button" @click="searchKey(1)" value="查找班级">
+						</form>
+						<!-- 选课工具栏 -->
+						<form class="form-inline" v-if="menu==2">
+							<input id="key" class="form-control mr-sm-2" type="search" placeholder="课程名" aria-label="Search"> <input class="btn btn-outline-success"
+							 type="button" @click="searchKey(2)" value="查找课程"> <input type="text" class="temp" readonly="readonly"><input
+							 type="button" class="btn btn btn-outline-success " @click="getTableInfo" value="我的选课"> <input type="text" class="temp"
+							 readonly="readonly"><input type="button" class="btn btn btn-outline-success" data-toggle="modal" data-target="#selectModal"
+							 @click="modal.alertSelect" value="修改选课">
+						</form>
+						<!-- 请假工具栏 -->
+						<form class="form-inline" v-if="menu==3">
+							<input type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#leaveModal" value="请假申请">
+						</form>
+						<!-- 成绩工具栏 -->
+						<form class="form-inline" v-if="menu==4">
+							<input id="key" class="form-control mr-sm-2" type="search" placeholder="课程名" aria-label="Search"> <input class="btn btn-outline-success"
+							 type="button" @click="searchKey(3)" value="查找课程成绩"><input type="text" class="temp" readonly="readonly"> <input
+							 v-if="menu==4" type="button" class="btn btn-primary float-right" value="导出成绩" @click="exportOp">
+						</form>
+					</nav>
+				</div>
+
+				<div class="tableView col-xl-12">
+					<table class="table table-striped table-hover table-dark">
+						<!-- 标题 -->
+						<thead class="thead-light">
+							<tr>
+								<th v-for="item in tabletitle">{{item}}</th>
+							</tr>
+						</thead>
+						<!-- 个人信息 -->
+						<tbody v-if="menu==0">
+							<tr v-for="item in tablecontent">
+								<td :title="item.sn">{{item.sn}}</td>
+								<td>{{item.name}}</td>
+								<td>{{item.sex}}</td>
+								<td :title="item.mobile"><input v-model="tablecontent[0].mobile" type="text" style="width: 100px; border: 0px; color: white; background-color: rgba(0, 0, 0, 0);"></td>
+								<td :title="item.qq"><input v-model="tablecontent[0].qq" type="text" style="width: 100px; border: 0px; color: white; background-color: rgba(0, 0, 0, 0);"></td>
+								</td>
+								<td :title="item.className">{{item.className}}</td>
+							</tr>
+						</tbody>
+						<!-- 班级信息 -->
+						<tbody v-if="menu==1">
+							<tr v-for="item in tablecontent">
+								<td>{{item.name}}</td>
+								<td :title="item.info">{{item.info}}</td>
+							</tr>
+						</tbody>
+						<!-- 选课信息 -->
+						<tbody v-if="menu==2">
+							<tr v-for="item in tablecontent">
+								<td>{{item.name}}</td>
+								<td>{{item.teacherName}}</td>
+								<td :title="item.date">{{item.course_date}}</td>
+								<td>{{item.selected_num}}</td>
+								<td>{{item.max_num}}</td>
+								<td :title="item.info">{{item.info}}</td>
+							</tr>
+						</tbody>
+						<!-- 请假信息 -->
+						<tbody v-if="menu==3">
+							<tr v-for="item in tablecontent">
+								<td>{{item.name}}</td>
+								<td :title="item.time">{{item.time}}</td>
+								<td :title="item.info">{{item.info}}</td>
+								<td>{{item.isAgree}}</td>
+								<td :title="item.remark">{{item.remark}}</td>
+							</tr>
+						</tbody>
+						<!-- 成绩信息 -->
+						<tbody v-if="menu==4">
+							<tr v-for="item in tablecontent">
+								<td>{{item.name}}</td>
+								<td>{{item.course}}</td>
+								<td>{{item.score}}</td>
+								<td :title="item.remark">{{item.remark}}</td>
+							</tr>
+						</tbody>
+						<!-- 系统信息 -->
+						<tbody v-if="menu==5">
+							<tr>
+								<td>
+									<div class="input-group mb-3">
+										<input type="password" class="form-control rounded" v-model="pwd" placeholder="输入原密码"> <input type="text"
+										 class="form-control rounded" v-model="newpwd" placeholder="输入修改后的密码">
+										<div class="input-group-append">
+											<input type="button" class="btn btn-danger" @click="alterPassword" value="确认修改">
+										</div>
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+			</div>
+			<!-- 右侧内容结束 -->
+		</div>
+
+		<div class="version">
+			<span style="font-size: 10px ; color:white;"><B>Copyright © 2020 Thirdly. All
+				rights reserved.</B></span>
+		</div>
+		<div id="modal">
+			<!-- 选课弹出框 -->
+			<div class="modal fade" id="selectModal">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<!-- 模态框头部 -->
+						<div class="modal-header">可选</div>
+						<!-- 模态框主体 -->
+						<div class="modal-body row">
+							<div style="width: 100%; height: 150px; overflow: auto">
+								<table class="table">
+									<thead>
+										<tr>
+											<th>名称</th>
+											<th>已选数</th>
+											<th>最多人数</th>
+											<th>描述</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr v-for="item in unSelectedList">
+											<td><input type="checkbox" :value="item.id" v-model="willselectList" :title="item.num">{{item.name}}</td>
+											<td :title="item.num">{{item.num}}</td>
+											<td :title="item.max">{{item.max}}</td>
+											<td :title="item.info">{{item.info}}</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+						<div class="modal-header">可退选</div>
+						<div class="modal-body row">
+							<div style="width: 100%; height: 150px; overflow: auto">
+								<table class="table">
+									<thead>
+										<tr>
+											<th>名称</th>
+											<th>描述</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr v-for="item in selectedList">
+											<td><input type="checkbox" :value="item.id" v-model="willUnselectList">{{item.name}}</td>
+											<td :title="item.info">{{item.info}}</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+						<!-- 模态框底部 -->
+						<div class="modal-footer">
+							<button type="button" class="btn btn-primary" data-dismiss="modal" @click="subSelect">确定</button>
+							<button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- 弹出框结束-->
+			<!-- 请假弹出框 -->
+			<div class="modal fade" id="leaveModal">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<!-- 模态框头部 -->
+						<div class="modal-header">请假</div>
+						<!-- 模态框主体 -->
+						<div class="modal-body row">
+							<div class="rounded border" style="width: 100%; height: 280px; overflow: auto">
+								<div>
+									<div class="form-group">
+										<label for="usr">请假人:</label> <input type="text" style="background-color: rgba(0, 0, 0, 0);" readonly="readonly"
+										 class="form-control" v-model="vm.username">
+									</div>
+									<div class="form-group">
+										<label for="usr">请假时间:</label> <input type="text" class="form-control" v-model="leave_time">
+									</div>
+									<div class="form-group">
+										<label for="usr">请假理由:</label> <input type="text" class="form-control" v-model="leave_info">
+									</div>
+								</div>
+							</div>
+
+						</div>
+						<!-- 模态框底部 -->
+						<div class="modal-footer">
+							<button type="button" class="btn btn-primary" data-dismiss="modal" @click="addLeave">确定</button>
+							<button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- 弹出框结束-->
+		</div>
+	</body>
+	<script type="text/javascript">
+		a()
+
+		function a() {
+			$(document).ready(function() {
+				$('[data-toggle="popover"]').popover();
+			});
+		}
+	</script>
+	<script src="js/student.js"></script>
+</html>

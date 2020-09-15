@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>管理员|学生成绩管理</title>
+		<link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+		<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+		<script src="https://cdn.staticfile.org/popper.js/1.15.0/umd/popper.min.js"></script>
+		<script src="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+		<script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
+		<script src="https://cdn.staticfile.org/vue-resource/1.5.1/vue-resource.min.js"></script>
+		<link rel="stylesheet" href="css/admin.css">
+		<script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+		<script src="js/bootstrap-treeview.min.js"></script>
+	</head>
+	<body background="img/adminBg1.jpg">
+		<div id="app" class="col-xl-10 offset-xl-1 rounded app row border border-dark">
+			<!-- 标题 -->
+			<div class=" rounded title row border border-dark">
+				<div class="col-xl-5">
+					<h5>
+						<B>学生成绩管理系统|管理员客户端</B>
+					</h5>
+				</div>
+				<div class="col-xl-3 offset-xl-4">
+					欢迎您:【<span style="color: red">{{username}}</span>】&nbsp;&nbsp;&nbsp;
+					<a href="javascript:void" @click="exit"><span class="text-dark">安全退出</span></a>
+				</div>
+			</div>
+			<!-- 标题结束 -->
+			<!-- 左侧菜单 -->
+			<div class="col-xl-2 rounded menuView border border-dark">
+				<div class="treetitle rounded border border-dark">
+					<h5>
+						<B>导航菜单</B>
+					</h5>
+				</div>
+				<div id="tree" class="tree"></div>
+			</div>
+			<!-- 左侧菜单结束 -->
+			<!-- 右侧内容-->
+			<div class="col-xl-10 rounded contentView border row border-dark">
+				<div class="col-xl-12">
+					<nav class="navbar navbar-light bg-light justify-content-between rounded">
+						<a class="navbar-brand"><B>{{title}}</B></a>
+						<form class="form-inline" v-if="menu!=-1&&menu!=6">
+							<input id="key" class="form-control" type="search" :placeholder=placeholder aria-label="Search"> <input type="button"
+							 class="btn btn-outline-primary" @click="searchKey" value="搜索"><input type="text" class="temp" readonly="readonly">
+							<input type="button" class="btn btn-outline-danger" data-toggle="modal" data-target="#deleteModal" @click="deleteOp"
+							 value="删除"><input type="text" class="temp" readonly="readonly">
+							<input type="button" class="btn btn-outline-success" data-toggle="modal" data-target="#addModal" @click="addOp"
+							 value="添加"> <input type="text" class="temp" readonly="readonly"><input type="button" v-if="menu==0||menu==1||menu==2"
+							 class="btn btn-outline-warning" @click="alterOp" value="修改">
+						</form>
+					</nav>
+				</div>
+				<div class="tableView col-xl-12">
+					<table class="table table-striped table-hover ">
+						<thead class="thead-dark">
+							<tr>
+								<th v-for="item in tabletitle">{{item}}</th>
+							</tr>
+						</thead>
+					</table>
+					<div style="height: 85%; overflow: auto">
+						<table class="table table-striped table-hover ">
+							<!-- 学生信息 -->
+							<tbody v-if="menu==0">
+								<tr v-for="(item,i) in tablecontent">
+									<td :title="item.sn"><input :value="item.sn" type="text" required="required" class="alertInput"></td>
+									<td :title="item.name"><input v-model="tablecontent[i].name" type="text" class="alertInput"></td>
+									<td :title="item.sex"><input v-model="tablecontent[i].sex" type="text" class="alertInput"></td>
+									<td :title="item.mobile"><input v-model="tablecontent[i].mobile" type="text" class="alertInput"></td>
+									<td :title="item.qq"><input v-model="tablecontent[i].qq" type="text" class="alertInput"></td>
+									<td :title="item.name"><input v-model="tablecontent[i].className" type="text" class="alertInput"></td>
+									<td v-if="alterOp_"><input class="btn btn-sm btn-outline-danger" type="button" @click="save(i)" value="保存"></td>
+								</tr>
+							</tbody>
+							<!-- 教师信息 -->
+							<tbody v-if="menu==1">
+								<tr v-for="(item,i) in tablecontent">
+									<td :title="item.sn"><input :value="item.sn" type="text" required="required" class="alertInput"></td>
+									<td :title="item.name"><input v-model="tablecontent[i].name" type="text" class="alertInput"></td>
+									<td :title="item.sex"><input v-model="tablecontent[i].sex" type="text" class="alertInput"></td>
+									<td :title="item.mobile"><input v-model="tablecontent[i].mobile" type="text" class="alertInput"></td>
+									<td :title="item.qq"><input v-model="tablecontent[i].qq" type="text" class="alertInput"></td>
+									<td :title="item.name"><input v-model="tablecontent[i].className" type="text" class="alertInput"></td>
+									<td v-if="alterOp_"><input class="btn btn-sm btn-outline-danger" type="button" @click="save(i)" value="保存"></td>
+								</tr>
+							</tbody>
+							<!-- 班级信息 -->
+							<tbody v-if="menu==2">
+								<tr v-for="(item,i) in tablecontent">
+									<td :title="item.name"><input v-model="tablecontent[i].name" type="text" class="alertInput"></td>
+									<td :title="item.info"><input v-model="tablecontent[i].info" type="text" class="alertInput"></td>
+									<td v-if="alterOp_"><input class="btn btn-sm btn-outline-danger" type="button" @click="save(i)" value="保存"></td>
+								</tr>
+							</tbody>
+							<!-- 课程信息 -->
+							<tbody v-if="menu==3">
+								<tr v-for="item in tablecontent">
+									<td>{{item.name}}</td>
+									<td>{{item.teacherName}}</td>
+									<td :title="item.date">{{item.course_date}}</td>
+									<td>{{item.selected_num}}</td>
+									<td>{{item.max_num}}</td>
+									<td :title="item.info">{{item.info}}</td>
+								</tr>
+							</tbody>
+							<!-- 选课信息 -->
+							<tbody v-if="menu==4">
+								<tr v-for="item in tablecontent">
+									<td>{{item.name}}</td>
+									<td>{{item.course}}</td>
+								</tr>
+							</tbody>
+							<!-- 成绩信息 -->
+							<tbody v-if="menu==5">
+								<tr v-for="item in tablecontent">
+									<td>{{item.name}}</td>
+									<td>{{item.course}}</td>
+									<td>{{item.score}}</td>
+									<td :title="item.remark">{{item.remark}}</td>
+								</tr>
+							</tbody>
+							<!-- 系统信息 -->
+							<tbody v-if="menu==6">
+								<tr>
+									<td>
+										<div class="input-group mb-3">
+											<input type="password" class="form-control rounded" v-model="pwd" placeholder="输入原密码"> <input type="text"
+											 class="form-control rounded" v-model="newpwd" placeholder="输入修改后的密码">
+											<div class="input-group-append">
+												<input type="button" class="btn btn-danger" @click="alterPassword" value="确认修改">
+											</div>
+										</div>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+			<!-- 右侧内容结束 -->
+			<!-- 删除弹出框 -->
+			<div class="modal fade" id="deleteModal">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<!-- 模态框头部 -->
+						<div class="modal-header">
+							<h4 class="modal-title">
+								<B>删除</B>
+							</h4>
+							<button type="button" class="close" data-dismiss="modal">&times;</button>
+						</div>
+						<!-- 模态框主体 -->
+						<div class="modal-body row">
+							<div class="col-xl-3 rounded">
+								<B>选择删除项</B>
+							</div>
+							<div class="col-xl-9">
+								<input type="button" class="btn btn-sm btn-link float-right" data-toggle="tooltip" data-placement="right"
+								 :title="help" value="帮助"> <input type="button" class="btn btn-sm btn-outline-danger float-right" @click="deleteOp_"
+								 value="确认删除">
+							</div>
+							<div class="rounded border" style="width: 100%; height: 250px; overflow: auto; margin-top: 5px">
+								<table class="table">
+									<thead class="thead-light">
+										<tr>
+											<th>名称</th>
+											<th v-if="menu==4||menu==5">课程名</th>
+											<th v-if="menu==5">分数</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr v-for="item in deleteList">
+											<td><input type="checkbox" :value="item.id" v-model="selectDelete">{{item.name}}</td>
+											<td v-if="menu==4||menu==5">{{item.course}}</td>
+											<td v-if="menu==5">{{item.score}}</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+						<!-- 模态框底部 -->
+						<div class="modal-footer">
+							<button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+						</div>
+
+					</div>
+				</div>
+			</div>
+			<!-- 删除弹出框结束-->
+			<!-- 添加弹出框 -->
+			<div class="modal fade" id="addModal">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<!-- 模态框头部 -->
+						<div class="modal-header">
+							<h4 class="modal-title">添加</h4>
+							<button type="button" class="close" data-dismiss="modal">&times;</button>
+						</div>
+						<!-- 模态框主体 -->
+						<div class="modal-body row">
+							<div class="col-xl-3 rounded">
+								<B>填写信息</B>
+							</div>
+							<div class="col-xl-9">
+								<input type="button" class="btn btn-sm btn-primary float-right" @click="addOp_" value="确认添加">
+							</div>
+
+							<div class="rounded border" style="width: 100%; height: 280px; overflow: auto">
+								<div>
+									<!-- 填写姓名 -->
+									<div v-if="menu==0||menu==1" class="form-group">
+										<label for="usr">姓名:</label> <input type="text" class="form-control" v-model="addData.name">
+									</div>
+									<!-- 选择学生 -->
+									<div v-if="menu==5||menu==4" style="margin-top: 5px">
+										<div class="btn-group" style="width: 50%">
+											<button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+											 aria-expanded="false">选择学生</button>
+											<div class="dropdown-menu">
+												<div class="radio" v-for="item in allstudent">
+													<label><input type="radio" name="studentradio" @click="showSelect(0,item.name)" :value="item.id" v-model="addData.student_id">{{item.name}}
+													</label>
+												</div>
+											</div>
+										</div>
+										<input type="text" readonly="readonly" class="rounded" :value="studentname">
+									</div>
+									<!-- 选择性别 -->
+									<div v-if="menu==0||menu==1" class="form-group">
+										<label for="usr">性别:</label> <label class="radio-inline">
+											<input type="radio" value="0" name="sexradio" v-model="addData.sex">女
+										</label> <label class="radio-inline"><input type="radio" name="sexradio" v-model="addData.sex" value="1">男</label>
+									</div>
+									<!-- 填写电话 -->
+									<div v-if="menu==0||menu==1" class="form-group">
+										<label for="usr">电话:</label> <input type="text" class="form-control" v-model="addData.mobile">
+									</div>
+									<!-- 选择班级 -->
+									<div v-if="menu==0||menu==1" style="margin-top: 5px">
+										<div class="btn-group" style="width: 50%">
+											<button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+											 aria-expanded="false">选择班级</button>
+											<div class="dropdown-menu">
+												<div class="radio" v-for="item in allclazz">
+													<label><input type="radio" name="clazzradio" @click="showSelect(1,item.name)" :value="item.id" v-model="addData.clazz_id">{{item.name}}
+													</label>
+												</div>
+											</div>
+										</div>
+										<input type="text" readonly="readonly" class="rounded" :value="clazzname">
+									</div>
+									<!-- 班级名 -->
+									<div v-if="menu==2" class="form-group">
+										<label for="usr">班级名:</label> <input type="text" class="form-control" v-model="addData.clazzname">
+									</div>
+									<!-- 课程名 -->
+									<div v-if="menu==3" class="form-group">
+										<label for="usr">课程名:</label> <input type="text" class="form-control" v-model="addData.coursename">
+									</div>
+									<!-- 选择课程 -->
+									<div v-if="menu==4||menu==5" style="margin-top: 5px">
+										<div class="btn-group" style="width: 50%">
+											<button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+											 aria-expanded="false">选择课程</button>
+											<div class="dropdown-menu">
+												<div class="radio" v-for="item in allcourse">
+													<label><input type="radio" name="courseradio" @click="showSelect(2,item.name)" :value="item.id" v-model="addData.course_id">{{item.name}}
+													</label>
+												</div>
+											</div>
+
+										</div>
+										<input type="text" readonly="readonly" class="rounded" :value="coursename">
+									</div>
+									<!-- 授课老师 -->
+									<div v-if="menu==3" style="margin-top: 5px">
+										<div class="btn-group" style="width: 50%">
+											<button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+											 aria-expanded="false">授课老师</button>
+											<div class="dropdown-menu">
+												<div class="radio" v-for="item in allteacher">
+													<label><input type="radio" name="teacherradio" @click="showSelect(3,item.name)" :value="item.id" v-model="addData.teacher_id">{{item.name}}
+													</label>
+												</div>
+											</div>
+										</div>
+										<input type="text" readonly="readonly" class="rounded" :value="teachername">
+									</div>
+									<!-- 最大可选 -->
+									<div v-if="menu==3" class="form-group">
+										<label for="usr">最大可选人数:</label> <input type="text" class="form-control" v-model="addData.max">
+									</div>
+									<!-- 上课时间 -->
+									<div v-if="menu==3" class="form-group">
+										<label for="usr">上课时间:</label> <input type="text" class="form-control" v-model="addData.time">
+									</div>
+									<!-- 分数 -->
+									<div v-if="menu==5" class="form-group">
+										<label for="usr">分数:</label> <input type="text" class="form-control" v-model="addData.score">
+									</div>
+									<!-- 描述 -->
+									<div v-if="menu==2||menu==3||menu==5" class="form-group">
+										<label for="usr">描述:</label> <input type="text" class="form-control" v-model="addData.remark">
+									</div>
+
+								</div>
+							</div>
+						</div>
+						<!-- 模态框底部 -->
+						<div class="modal-footer">
+							<button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- 添加弹出框结束 -->
+		</div>
+		<div class="version">
+			<span style="font-size: 10px">Copyright © 2020 Thirdly. All
+				rights reserved.</span>
+		</div>
+	</body>
+	<script type="text/javascript">
+		a()
+
+		function a() {
+			$(document).ready(function() {
+				$('[data-toggle="tooltip"]').tooltip();
+			});
+		}
+	</script>
+	<script src="js/admin.js"></script>
+</html>

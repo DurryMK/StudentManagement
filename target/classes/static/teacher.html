@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>教师端|学生成绩管理</title>
+		<link rel="stylesheet" href="css/bootstrap.css">
+		<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+		<script src="https://cdn.staticfile.org/popper.js/1.15.0/umd/popper.min.js"></script>
+		<script src="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+		<script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
+		<script src="https://cdn.staticfile.org/vue-resource/1.5.1/vue-resource.min.js"></script>
+		<link rel="stylesheet" href="css/admin.css">
+		<script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+		<script src="js/bootstrap-treeview.min.js"></script>
+	</head>
+	<body background="img/teacherBg.jpg">
+		<div id="app" class="col-xl-10 offset-xl-1 rounded app row border">
+			<!-- 标题 -->
+			<div class=" rounded title row border">
+				<div class="col-xl-5">
+					<h5>
+						<B><span style="color: white;">学生成绩管理系统|教师客户端</span></B>
+					</h5>
+				</div>
+				<div class="col-xl-3 offset-xl-4">
+					<span style="color:white;">欢迎您:【<span style="color: red">{{username}}</span>】&nbsp;&nbsp;&nbsp;
+					</span><a href="javascript:void" @click="exit"><span style="color:white;">安全退出</span></a>
+				</div>
+			</div>
+			<!-- 标题结束 -->
+			<!-- 左侧菜单 -->
+			<div class="col-xl-2 rounded menuView border rounded">
+				<div class="treetitle rounded border" @click="toWelcome">
+					<h5>
+						<B><span style="color: white;">导航菜单</span></B>
+					</h5>
+				</div>
+				<!-- 左侧菜单主体 -->
+				<div id="tree" class="tree rounded"></div>
+			</div>
+			<!-- 左侧菜单结束 -->
+			<!-- 右侧内容-->
+			<div class="col-xl-10 rounded contentView border row">
+				<div class="col-xl-12">
+					<nav class="navbar navbar-light bg-light justify-content-between rounded">
+						<a class="navbar-brand"><B>{{title}}</B></a>
+						<!-- 个人信息工具栏 -->
+						<form class="form-inline" v-if="menu==0">
+							<input type="button" class="btn btn btn-outline-danger" @click="alterPersonalInfo" value="保存修改"> <input type="button"
+							 class="btn btn-link " data-toggle="tooltip" data-placement="right" title="点击列表，可修改以下信息:【电话号码(12位以内)/QQ号（18位以内）】"
+							 value="帮助">
+						</form>
+						<!-- 班级查询 -->
+						<form class="form-inline" v-if="menu==1">
+							<input id="key" class="form-control" type="search" placeholder="学生名" aria-label="Search"> <input class="btn btn-outline-success"
+							 type="button" @click="searchKey" value="查找学生"> <input type="text" class="temp" readonly="readonly"><input type="button"
+							 class="btn btn-outline-primary" value="导出学生信息" @click="exportStudentInfo">
+						</form>
+						<!-- 学生成绩管理工具栏 -->
+						<form class="form-inline" v-if="menu==3||menu==5">
+							<input type="button" class="btn btn-outline-success " data-toggle="modal" value="导出" @click="exportOp_studentScore"><input
+							 type="text" readonly="readonly" class="temp"><input type="button" class="btn btn-outline-success" data-toggle="modal"
+							 value="导入" data-toggle="modal" data-target="#importModal">
+							<input type="text" readonly="readonly" class="temp"><input v-if="!cutButton" type="button" class="btn btn-outline-primary"
+							 data-toggle="modal" value="显示成绩统计" @click="showScore(5)"> <input type="text" readonly="readonly" class="temp"><input
+							 type="button" v-if="cutButton" class="btn btn-outline-primary" data-toggle="modal" value="显示成绩列表" @click="showScore(3)">
+						</form>
+
+					</nav>
+				</div>
+
+				<div class="tableView col-xl-12">
+					<table class="table table-striped table-hover" v-if="menu==-1">
+						<thead class="thead-light">
+							<tr>
+								<th>通知信息</th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>未回复的请假申请</td>
+								<td>{{leavenum}}</td>
+							</tr>
+						</tbody>
+					</table>
+					<!-- 右侧表格内容 -->
+					<table class="table table-striped table-hover" v-if="menu!=-1">
+						<thead class="thead-light">
+							<tr v-if="menu!=5">
+								<th v-for="item in tabletitle">{{item}}</th>
+							</tr>
+							<tr v-if="menu==5">
+								<th>课程名</th>
+								<th>最高分</th>
+								<th>最低分</th>
+								<th>平均分</th>
+							</tr>
+						</thead>
+						<!-- 个人信息 -->
+						<tbody v-if="menu==0">
+							<tr v-for="item in tablecontent">
+								<td :title="item.sn"><input :value="item.sn" type="text" required="required" style="width: 100px; border: 0px; background-color: rgba(0, 0, 0, 0);"></td>
+								<td>{{item.name}}</td>
+								<td>{{item.sex}}</td>
+								<td :title="item.mobile"><input v-model="tablecontent[0].mobile" type="text" style="width: 100px; border: 0px; background-color: rgba(0, 0, 0, 0);"></td>
+								<td :title="item.qq"><input v-model="tablecontent[0].qq" type="text" style="width: 100px; border: 0px; background-color: rgba(0, 0, 0, 0);"></td>
+								<td :title="item.className">{{item.className}}</td>
+							</tr>
+						</tbody>
+						<!-- 学生个人信息 -->
+						<tbody v-if="menu==1">
+							<tr v-for="item in tablecontent">
+								<td :title="item.sn"><input :value="item.sn" type="text" required="required" style="width: 100px; border: 0px; background-color: rgba(0, 0, 0, 0);"></td>
+								<td>{{item.name}}</td>
+								<td>{{item.sex}}</td>
+								<td :title="item.mobile">{{item.mobile}}</td>
+								<td :title="item.qq">{{item.qq}}</td>
+							</tr>
+						</tbody>
+						<!-- 请假信息 -->
+						<tbody v-if="menu==2">
+							<tr v-for="item in tablecontent">
+								<td>{{item.name}}</td>
+								<td :title="item.time">{{item.time}}</td>
+								<td :title="item.info">{{item.info}}</td>
+								<!-- 未审核的请假信息 -->
+								<td v-if="item.isAgree=='未审核'"><input type="button" class="btn btn-primary btn-sm" value="是" @click="replay(1,item.id)"><input
+									 type="button" class="btn btn-danger btn-sm" value="否" @click="replay(-1,item.id)"></td>
+								<td v-if="item.isAgree=='未审核'"><input :id="item.id" type="text" class="rounded" style="width: 80%"></td>
+								<!-- 已审核的请假信息 -->
+								<td v-if="item.isAgree!='未审核'">{{item.isAgree}}</td>
+								<td v-if="item.isAgree!='未审核'"><input :id="item.id" type="text" readonly="readonly" :value="item.remark" style="width: 80%; border: 0px; background-color: rgba(0, 0, 0, 0);"></td>
+							</tr>
+						</tbody>
+						<!-- 成绩信息 -->
+						<tbody v-if="menu==3">
+							<tr v-for="item in tablecontent">
+								<td :title="item.sn">{{item.sn}}</td>
+								<td>{{item.name}}</td>
+								<td>{{item.course}}</td>
+								<td>{{item.score}}</td>
+								<td :title="item.remark">{{item.remark}}</td>
+							</tr>
+						</tbody>
+						<!-- 成绩汇总信息 -->
+						<tbody v-if="menu==5">
+							<tr v-for="item in summary">
+								<td>{{item.name}}</td>
+								<td>{{item.max}}</td>
+								<td>{{item.min}}</td>
+								<td>{{item.avg}}</td>
+							</tr>
+						</tbody>
+						<!-- 系统信息 -->
+						<tbody v-if="menu==4">
+							<tr>
+								<td>
+									<div class="input-group mb-3">
+										<input type="password" class="form-control rounded" v-model="pwd" placeholder="输入原密码"> <input type="text"
+										 class="form-control rounded" v-model="newpwd" placeholder="输入修改后的密码">
+										<div class="input-group-append">
+											<input type="button" class="btn btn-danger" @click="alterPassword" value="确认修改">
+										</div>
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<!-- 右侧表格内容结束 -->
+				</div>
+			</div>
+			<!-- 右侧内容结束 -->
+			<!-- 导入弹出框 -->
+			<div class="modal fade" id="importModal">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<!-- 模态框头部 -->
+						<div class="modal-header">
+							<B>选择文件</B>
+						</div>
+						<!-- 模态框主体 -->
+						<div class="input-group">
+							<div class="custom-file">
+								<input type="file" v-model="importFile">
+							</div>
+							<div class="input-group-append">
+								<input class="btn btn-outline-secondary" type="button" data-dismiss="modal" @click="importOp_studentScore"
+								 value="确认">
+							</div>
+						</div>
+						<!-- 模态框底部 -->
+						<div class="modal-footer">
+							<button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- 导入框结束-->
+		</div>
+		<div class="version">
+			<span style="font-size: 10px"><B>Copyright © 2020 Thirdly. All
+				rights reserved.</B></span>
+		</div>
+	</body>
+	<script type="text/javascript">
+		a()
+
+		function a() {
+			$(document).ready(function() {
+				$('[data-toggle="tooltip"]').tooltip();
+			});
+		}
+	</script>
+	<script src="js/teacher.js"></script>
+</html>
